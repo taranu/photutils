@@ -18,6 +18,7 @@ def build_ellipse_model(
     fill: float = 0.0,
     high_harmonics=False,
     sma_interval: float = 0.1,
+    num_threads: int = 1,
 ):
     """
     Build a model elliptical galaxy image from a list of isophotes.
@@ -55,6 +56,9 @@ def build_ellipse_model(
         The interval between node values of the semi-major axis, which is used
         to spline interpolate values of other shape parameters.
 
+    num_threads : optional, int
+        The number of threads to use for parallel evaluation. Default 1.
+
     Returns
     -------
     result : 2D `~numpy.ndarray`
@@ -62,6 +66,9 @@ def build_ellipse_model(
     """
     if len(isolist) == 0:
         msg = 'isolist must not be empty'
+        raise ValueError(msg)
+    if not (num_threads > 0):
+        msg = f'{num_threads=} must be >0'
         raise ValueError(msg)
 
     # the target grid is spaced in 0.1 pixel intervals so as
@@ -125,6 +132,7 @@ def build_ellipse_model(
         pa_array,
         x0_array,
         y0_array,
+        num_threads=num_threads,
         **kwargs_harm,
     )
 
