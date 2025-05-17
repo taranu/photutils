@@ -60,6 +60,11 @@ def build_ellipse_model(
         The interval between node values of the semi-major axis, which is used
         to spline interpolate values of other shape parameters.
 
+    num_threads : int, optional
+        The number of threads to use for parallel evaluation. A value of None
+        will result in automatic selection based on parallel library
+        configurations.
+
     Returns
     -------
     result : 2D `~numpy.ndarray`
@@ -67,6 +72,8 @@ def build_ellipse_model(
     """
     if len(isolist) == 0:
         raise ValueError('isolist must not be empty')
+    if (num_threads is not None) and not (num_threads > 0):
+        raise ValueError(f'{num_threads=} must be >0')
 
     # the target grid is spaced in 0.1 pixel intervals so as
     # to ensure no gaps will result on the output array.
@@ -133,6 +140,7 @@ def build_ellipse_model(
         pa_array,
         x0_array,
         y0_array,
+        num_threads=num_threads,
         **kwargs_harm,
     )
 
