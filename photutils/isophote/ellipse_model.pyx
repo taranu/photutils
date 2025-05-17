@@ -6,6 +6,7 @@ Faster evaluation of ellipses from model.py.
 
 import cython
 import numpy as np
+from cython.parallel import prange
 
 cimport numpy as cnp
 
@@ -15,17 +16,17 @@ cnp.import_array()
 
 cdef extern from "math.h":
 
-    double cos(double x)
-    double sin(double x)
-    double sqrt(double x)
+    double cos(double x) nogil
+    double sin(double x) nogil
+    double sqrt(double x) nogil
 
 DTYPE = np.float64
 ctypedef cnp.float64_t DTYPE_t
 
-cdef inline double get_intens_no_harmonics(double intens0, double phi, double a3, double b3, double a4, double b4):
+cdef inline double get_intens_no_harmonics(double intens0, double phi, double a3, double b3, double a4, double b4) nogil:
     return intens0
 
-cdef inline double get_intens_harmonics(double intens0, double phi, double a3, double b3, double a4, double b4):
+cdef inline double get_intens_harmonics(double intens0, double phi, double a3, double b3, double a4, double b4) nogil:
     return (
         intens0
         + a3 * sin(3.0 * phi)
@@ -34,6 +35,8 @@ cdef inline double get_intens_harmonics(double intens0, double phi, double a3, d
         + b4 * cos(4.0 * phi)
     )
 
+cdef inline int to_int(double x) nogil:
+    return int(x)
 
 def build_ellipse_model_c(
     unsigned int n_rows,
@@ -50,6 +53,7 @@ def build_ellipse_model_c(
     cnp.ndarray[DTYPE_t, ndim=1] b4_array = None,
     double phi_min = 0.,
     double phi_max = 2.0*np.pi,
+    int num_threads = 0,
 ):
     cdef cython.Py_ssize_t len_sma
     len_sma = len(finely_spaced_sma)
@@ -91,7 +95,7 @@ def build_ellipse_model_c(
     i_max = n_cols - 1
     j_max = n_rows - 1
 
-    for index in range(1, len_sma):
+    for index in prange(1, len_sma, nogil=True, num_threads=num_threads, schedule="guided"):
         with cython.boundscheck(False):
             sma = finely_spaced_sma[index]
             q = 1.0 - eps_array[index]
@@ -113,8 +117,8 @@ def build_ellipse_model_c(
             x = r * cos(phi + pa) + x0
             y = r * sin(phi + pa) + y0
             # round down (this is equivalent to int(floor(x)))
-            i = int(x) - (x < 0)
-            j = int(y) - (y < 0)
+            i = to_int(x) - (x < 0)
+            j = to_int(y) - (y < 0)
 
             if (-1 <= i <= i_max) and (-1 <= j <= j_max):
                 # get fractional deviations relative to target array
