@@ -6,6 +6,13 @@ Photutils
 
 |CI Status| |Codecov Status| |Latest RTD Status|
 
+This is a fork of photutils that allows for parallel evaluation of
+ellipse isophotes. To compile, you must have a library like OpenMP
+installed and set the appropriate flags; for example:
+`CFLAGS="${CFLAGS} -fopenmp" LDFLAGS="${LDFLAGS} -lomp" pip install .`
+There does not yet appear to be a simple way to enable parallel compilation
+with pyproject.toml.
+
 Photutils is a Python library that provides commonly-used tools
 and key functionality for detecting and performing photometry of
 astronomical sources. Tools are provided for background estimation,
